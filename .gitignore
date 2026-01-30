@@ -1,0 +1,14 @@
+.env
+certbot/conf/*
+certbot/www/*
+!certbot/conf/.gitkeep
+!certbot/www/.gitkeep
+logs/*
+!logs/.gitkeep
+*.log
+nginx/conf.d/default.conf
+backup_*.tar.gz
+.DS_Store
+.idea/
+.vscode/
+*.swp
