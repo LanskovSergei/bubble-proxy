@@ -2,7 +2,9 @@ version: '3.8'
 
 services:
   nginx:
-    image: nginx:1.25-alpine
+    build:
+      context: ./nginx/docker
+      dockerfile: Dockerfile
     container_name: bubble-proxy-nginx
     restart: unless-stopped
     ports:
@@ -11,6 +13,7 @@ services:
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/geoip:/usr/share/GeoIP:ro
       - ./certbot/www:/var/www/certbot:ro
       - ./certbot/conf:/etc/letsencrypt:ro
       - ./logs/nginx:/var/log/nginx
@@ -19,6 +22,7 @@ services:
       - DOMAIN=${DOMAIN}
     depends_on:
       - certbot
+      - geoip-updater
     networks:
       - proxy-network
     healthcheck:
@@ -26,6 +30,20 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+
+  geoip-updater:
+    image: maxmindinc/geoipupdate:latest
+    container_name: bubble-proxy-geoip
+    restart: unless-stopped
+    volumes:
+      - ./nginx/geoip:/usr/share/GeoIP
+    environment:
+      - GEOIPUPDATE_ACCOUNT_ID=${GEOIP_ACCOUNT_ID:-0}
+      - GEOIPUPDATE_LICENSE_KEY=${GEOIP_LICENSE_KEY:-000000000000}
+      - GEOIPUPDATE_EDITION_IDS=GeoLite2-Country
+      - GEOIPUPDATE_FREQUENCY=168
+    networks:
+      - proxy-network
 
   certbot:
     image: certbot/certbot:latest

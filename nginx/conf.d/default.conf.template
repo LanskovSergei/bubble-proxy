@@ -69,10 +69,14 @@ server {
         proxy_set_header X-Forwarded-Host $host;
         proxy_set_header X-Forwarded-Port $server_port;
         
-        # Host заголовок - отправляем оригинальный Bubble домен
+        # GeoIP: передача страны пользователя
+        proxy_set_header X-Forwarded-Country $geoip2_data_country_code;
+        proxy_set_header X-Forwarded-Country-Name $geoip2_data_country_name;
+        
+        # Host заголовок
         proxy_set_header Host ${BUBBLE_DOMAIN};
         
-        # WebSocket support (для Telegram Mini App)
+        # WebSocket support
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
@@ -96,7 +100,6 @@ server {
         proxy_read_timeout 60s;
     }
 
-    # Специальная обработка для telegram-web-app.js
     location ~ ^/(telegram-web-app\.js|telegram-web-app\.min\.js) {
         proxy_pass https://bubble_backend;
         proxy_ssl_server_name on;
@@ -117,7 +120,6 @@ server {
         proxy_read_timeout 30s;
     }
 
-    # API endpoints (с более строгим rate limit)
     location ~ ^/api/ {
         limit_req zone=api burst=20 nodelay;
         
