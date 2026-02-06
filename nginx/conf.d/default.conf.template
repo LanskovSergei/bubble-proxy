@@ -59,6 +59,17 @@ server {
         add_header Content-Type text/plain;
     }
 
+    # Bubble системные запросы (init/data) - ДОЛЖЕН БЫТЬ ПЕРЕД ВСЕМИ REGEX!
+    location ^~ /version-test/api/1.1/init/ {
+        add_header 'Access-Control-Allow-Origin' 'https://ru.vega-ex.com' always;
+        add_header 'Access-Control-Allow-Credentials' 'true' always;
+        add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS' always;
+        add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization' always;
+        add_header 'Content-Type' 'application/json' always;
+        
+        return 200 '{}';
+    }
+
     # Статика — кэшируем
     location ~* \.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
         add_header 'Access-Control-Allow-Origin' '*' always;
@@ -170,17 +181,6 @@ server {
         proxy_connect_timeout 10s;
         proxy_send_timeout 15s;
         proxy_read_timeout 15s;
-    }
-
-    # Bubble системные запросы (init/data) - возвращаем пустой ответ с CORS
-    location ^~ /version-test/api/1.1/init/ {
-        add_header 'Access-Control-Allow-Origin' 'https://ru.vega-ex.com' always;
-        add_header 'Access-Control-Allow-Credentials' 'true' always;
-        add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS' always;
-        add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization' always;
-        add_header 'Content-Type' 'application/json' always;
-        
-        return 200 '{}';
     }
 
     # version-test пути (для Bubble workflows)
