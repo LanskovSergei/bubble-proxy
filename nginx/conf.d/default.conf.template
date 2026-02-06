@@ -141,6 +141,55 @@ server {
         proxy_read_timeout 10s;
     }
 
+    # Bubble системные запросы (init/data и т.д.)
+    location ~ ^/version-test/api/1.1/init/ {
+        # Скрываем CORS от Bubble
+        proxy_hide_header Access-Control-Allow-Origin;
+        proxy_hide_header Access-Control-Allow-Methods;
+        proxy_hide_header Access-Control-Allow-Headers;
+        
+        # CORS preflight
+        if ($request_method = 'OPTIONS') {
+            add_header 'Access-Control-Allow-Origin' 'https://ru.vega-ex.com' always;
+            add_header 'Access-Control-Allow-Credentials' 'true' always;
+            add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS' always;
+            add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization' always;
+            add_header 'Access-Control-Max-Age' 1728000 always;
+            add_header 'Content-Type' 'text/plain; charset=utf-8' always;
+            add_header 'Content-Length' 0 always;
+            return 204;
+        }
+
+        # CORS для обычных запросов
+        add_header 'Access-Control-Allow-Origin' 'https://ru.vega-ex.com' always;
+        add_header 'Access-Control-Allow-Credentials' 'true' always;
+        add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS' always;
+        add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization' always;
+
+        # Проксируем на основной Bubble домен
+        proxy_pass https://${BUBBLE_DOMAIN};
+        proxy_ssl_server_name on;
+        proxy_ssl_name ${BUBBLE_DOMAIN};
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+
+        proxy_set_header Host ${BUBBLE_DOMAIN};
+        proxy_set_header X-Real-IP $real_ip;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        proxy_set_header Cookie $http_cookie;
+        proxy_pass_header Set-Cookie;
+
+        proxy_buffering on;
+        proxy_buffer_size 8k;
+        proxy_buffers 16 8k;
+
+        proxy_connect_timeout 10s;
+        proxy_send_timeout 30s;
+        proxy_read_timeout 30s;
+    }
+
     # API
     location ~ ^/api/ {
         # Скрываем CORS от Bubble
@@ -204,7 +253,8 @@ server {
         
         # CORS preflight
         if ($request_method = 'OPTIONS') {
-            add_header 'Access-Control-Allow-Origin' '*' always;
+            add_header 'Access-Control-Allow-Origin' 'https://ru.vega-ex.com' always;
+            add_header 'Access-Control-Allow-Credentials' 'true' always;
             add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS' always;
             add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization' always;
             add_header 'Access-Control-Max-Age' 1728000 always;
@@ -214,7 +264,8 @@ server {
         }
 
         # CORS для обычных запросов
-        add_header 'Access-Control-Allow-Origin' '*' always;
+        add_header 'Access-Control-Allow-Origin' 'https://ru.vega-ex.com' always;
+        add_header 'Access-Control-Allow-Credentials' 'true' always;
         add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS' always;
         add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization' always;
         add_header 'Access-Control-Expose-Headers' 'Content-Length,Content-Range' always;
@@ -233,6 +284,9 @@ server {
         # GeoIP
         proxy_set_header X-Forwarded-Country $geoip2_data_country_code;
         proxy_set_header X-Forwarded-Country-Name $geoip2_data_country_name;
+
+        proxy_set_header Cookie $http_cookie;
+        proxy_pass_header Set-Cookie;
 
         proxy_hide_header Alt-Svc;
 
@@ -254,7 +308,8 @@ server {
         
         # CORS preflight
         if ($request_method = 'OPTIONS') {
-            add_header 'Access-Control-Allow-Origin' '*' always;
+            add_header 'Access-Control-Allow-Origin' 'https://ru.vega-ex.com' always;
+            add_header 'Access-Control-Allow-Credentials' 'true' always;
             add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS' always;
             add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization' always;
             add_header 'Access-Control-Max-Age' 1728000 always;
@@ -264,7 +319,8 @@ server {
         }
 
         # CORS для обычных запросов
-        add_header 'Access-Control-Allow-Origin' '*' always;
+        add_header 'Access-Control-Allow-Origin' 'https://ru.vega-ex.com' always;
+        add_header 'Access-Control-Allow-Credentials' 'true' always;
         add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS' always;
         add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization' always;
         add_header 'Access-Control-Expose-Headers' 'Content-Length,Content-Range' always;
